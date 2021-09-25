@@ -23,3 +23,6 @@ Set your repositories url and post clone additional files
 # Needs Node.js v14+
 yarn start || npm install
 ``` 
+
+### Screenshot
+![](.github/screenshot.png)
