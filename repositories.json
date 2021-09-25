@@ -1,0 +1,13 @@
+{
+  "repositories_url": [
+    "git@github.com:mrbrunelli/my-portfolio.git",
+    "git@github.com:mrbrunelli/aws-node-sqs-worker.git",
+    "git@github.com:mrbrunelli/gerador-certificado-bradesco.git"
+  ],
+  "additional_files": [
+    {
+      "name": ".npmrc",
+      "content": "//registry.npmjs.org/:_authToken=my_npm_token"
+    }
+  ]
+}
