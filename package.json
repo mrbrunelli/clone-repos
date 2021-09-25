@@ -1,0 +1,16 @@
+{
+  "name": "clone-repos",
+  "version": "1.0.0",
+  "description": "Clone GitHub Repositories by repositories.json file",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "Matheus Ricardo Brunelli <matheus.brunelli@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^16.10.1"
+  }
+}
