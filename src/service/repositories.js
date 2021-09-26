@@ -1,76 +1,6 @@
-// import readLine from "readline";
-// import childProcess from "child_process";
-// import util from "util";
-// import {
-//   readFile,
-//   writeFile,
-//   mkdir,
-//   readdir,
-//   rmdir,
-//   access,
-// } from "fs/promises";
-// import { existsSync } from "fs";
-// import path from "path";
-
-// const json = JSON.parse(await readFile("./repositories.json"));
-// const exec = util.promisify(childProcess.exec);
-
-// const rl = readLine.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// });
-
-// rl.question("Deseja clonar os repositórios? (y/N): ", async (answer) => {
-//   if (answer === "y") {
-//     const devApiFolder = path.resolve("..", "devapi");
-
-//     const hasDevApiFolder = existsSync(devApiFolder);
-
-//     if (!hasDevApiFolder) {
-//       console.log("Criando pasta 'devapi' para os repositórios...");
-//       await mkdir(devApiFolder);
-//     }
-
-//     console.log("Clonando...");
-
-//     for (const url of json.repositories_url) {
-//       const command = `git clone ${url}`;
-//       await exec(command, { cwd: devApiFolder })
-//         .then(() => console.log(`Repositório ${url} clonado com sucesso!`))
-//         .catch(() =>
-//           console.log(
-//             `Já existe uma pasta clonada para esse repositório ${url}`
-//           )
-//         );
-//     }
-
-//     console.log("Repositórios clonados com sucesso!");
-
-//     console.log("Criando arquivos adicionais (tokens, envs, scripts)...");
-//     const clonedFolders = await readdir(devApiFolder);
-
-//     for (const folder of clonedFolders) {
-//       for (const file of json.additional_files) {
-//         const fileDir = path.resolve("..", "devapi", folder, file.name);
-//         await writeFile(fileDir, file.content);
-//       }
-//     }
-
-//     console.log("Arquivos adicionados com sucesso!");
-
-//     rl.close();
-//   } else {
-//     rl.close();
-//   }
-// });
-
-// rl.on("close", () => {
-//   console.log("\nFalou pilantra!");
-//   process.exit(0);
-// });
-
 import cp from "child_process";
 import util from "util";
+import chalk from "chalk";
 
 export class RepositoriesService {
   constructor({ repositoriesRepository, fileSystemService, readLineService }) {
@@ -84,23 +14,31 @@ export class RepositoriesService {
     const repositoriesUrl =
       await this.repositoriesRepository.findRepositoriesUrl();
 
+    this.log("Clonando...");
+
     for (const url of repositoriesUrl) {
       const command = `git clone ${url}`;
-      const result = await this.execCommand(command, { cwd: path });
-
-      // TODO add chalk to colorful messages
-      if (result.stderr) {
-        //
-      } else {
-        //
-      }
+      await this.execCommand(command, { cwd: path })
+        .then(() =>
+          this.log(`Repositório ${url} clonado com sucesso!`, "success")
+        )
+        .catch(() =>
+          this.log(
+            `Já existe uma pasta clonada para esse repositório: ${url}`,
+            "error"
+          )
+        );
     }
+
+    this.log("Repositórios clonados!");
   }
 
   async createAdditionalFiles(path) {
     const clonedFolders = await this.fileSystemService.readDir(path);
     const additionalFiles =
       await this.repositoriesRepository.findAdditionalFiles();
+
+    this.log("Adicionando arquivos...");
 
     for (const folder of clonedFolders) {
       for (const file of additionalFiles) {
@@ -110,12 +48,34 @@ export class RepositoriesService {
           file.name
         );
         await this.fileSystemService.createFile(fileDir, file.content);
+
+        this.log(`${file.name} adicionado em ${folder}`, "success");
       }
     }
+
+    this.log("Arquivos adicionados!");
+  }
+
+  log(text, type) {
+    const options = {
+      success: "green",
+      warning: "yellowBright",
+      error: "red",
+    };
+    console.log(chalk[options[type] || "cyan"].bold(text));
+  }
+
+  createReadLineObserver() {
+    this.readLineService.onClose(() => {
+      const folderName = this.repositoriesRepository.findFolderName();
+      this.log(`\n $ cd ../${folderName} \n`, "success");
+    });
   }
 
   async main() {
-    const question = "Deseja clonar os repositórios? (y/N): ";
+    this.createReadLineObserver();
+
+    const question = "\nDeseja clonar os repositórios? (y/N): ";
     const answer = await this.readLineService.question(question);
 
     if (this.readLineService.isPositiveAnswer(answer)) {
@@ -123,11 +83,18 @@ export class RepositoriesService {
       const folderPath = this.fileSystemService.getCompletePath(folderName);
 
       if (!this.fileSystemService.hasFolderPath(folderPath)) {
+        this.log(`Criando pasta '${folderName}' para os repositórios...`);
         await this.fileSystemService.createFolder(folderPath);
       }
 
       await this.cloneRepositories(folderPath);
-      await this.createAdditionalFiles(folderPath);
+
+      const question = "\nDeseja adicionar os arquivos extras? (y/N): ";
+      const answer = await this.readLineService.question(question);
+
+      if (this.readLineService.isPositiveAnswer(answer)) {
+        await this.createAdditionalFiles(folderPath);
+      }
 
       this.readLineService.closeReadLine();
     } else {
