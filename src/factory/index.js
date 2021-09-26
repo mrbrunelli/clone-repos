@@ -1,5 +1,5 @@
-import { RepositoriesRepository } from "../repository";
-import { ReadLineService, RepositoriesService } from "../service";
+import { RepositoriesRepository } from "../repository/index.js";
+import { ReadLineService, RepositoriesService } from "../service/index.js";
 
 function createRepositoriesRepository() {
   return new RepositoriesRepository();

@@ -1,2 +1,2 @@
-export * from "./readline";
-export * from "./repositories";
+export * from "./readline.js";
+export * from "./repositories.js";

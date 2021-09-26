@@ -10,7 +10,7 @@ export class ReadLineService {
 
   question(query) {
     return new Promise((resolve) => {
-      this.readline.question(query, resolve);
+      this.readLine.question(query, resolve);
     });
   }
 
