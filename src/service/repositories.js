@@ -69,28 +69,15 @@
 //   process.exit(0);
 // });
 
-import fs from "fs";
 import cp from "child_process";
 import util from "util";
-import path from "path";
 
 export class RepositoriesService {
-  constructor({ repositoriesRepository, readLineService }) {
+  constructor({ repositoriesRepository, fileSystemService, readLineService }) {
     this.repositoriesRepository = repositoriesRepository;
+    this.fileSystemService = fileSystemService;
     this.readLineService = readLineService;
     this.execCommand = util.promisify(cp.exec);
-  }
-
-  getCompletePath(...pathSegments) {
-    return path.resolve("..", ...pathSegments);
-  }
-
-  hasFolderPath(path) {
-    return fs.existsSync(path);
-  }
-
-  async createFolder(path) {
-    await fs.promises.mkdir(path);
   }
 
   async cloneRepositories(path) {
@@ -101,6 +88,7 @@ export class RepositoriesService {
       const command = `git clone ${url}`;
       const result = await this.execCommand(command, { cwd: path });
 
+      // TODO add chalk to colorful messages
       if (result.stderr) {
         //
       } else {
@@ -110,14 +98,18 @@ export class RepositoriesService {
   }
 
   async createAdditionalFiles(path) {
-    const clonedFolders = await fs.promises.readdir(path);
+    const clonedFolders = await this.fileSystemService.readDir(path);
     const additionalFiles =
       await this.repositoriesRepository.findAdditionalFiles();
 
     for (const folder of clonedFolders) {
       for (const file of additionalFiles) {
-        const fileDir = this.getCompletePath(path, folder, file.name);
-        await fs.promises.writeFile(fileDir, file.content);
+        const fileDir = this.fileSystemService.getCompletePath(
+          path,
+          folder,
+          file.name
+        );
+        await this.fileSystemService.createFile(fileDir, file.content);
       }
     }
   }
@@ -128,10 +120,10 @@ export class RepositoriesService {
 
     if (this.readLineService.isPositiveAnswer(answer)) {
       const folderName = this.repositoriesRepository.findFolderName();
-      const folderPath = this.getCompletePath(folderName);
+      const folderPath = this.fileSystemService.getCompletePath(folderName);
 
-      if (!this.hasFolderPath(folderPath)) {
-        await this.createFolder(folderPath);
+      if (!this.fileSystemService.hasFolderPath(folderPath)) {
+        await this.fileSystemService.createFolder(folderPath);
       }
 
       await this.cloneRepositories(folderPath);
