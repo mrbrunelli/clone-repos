@@ -21,4 +21,8 @@ export class ReadLineService {
   closeReadLine() {
     this.readLine.close();
   }
+
+  onClose(callback) {
+    this.readLine.on("close", callback);
+  }
 }
