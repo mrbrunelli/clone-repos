@@ -69,4 +69,77 @@
 //   process.exit(0);
 // });
 
-export class RepositoriesService {}
+import fs from "fs";
+import cp from "child_process";
+import util from "util";
+import path from "path";
+
+export class RepositoriesService {
+  constructor({ repositoriesRepository, readLineService }) {
+    this.repositoriesRepository = repositoriesRepository;
+    this.readLineService = readLineService;
+    this.execCommand = util.promisify(cp.exec);
+  }
+
+  getCompletePath(...pathSegments) {
+    return path.resolve("..", ...pathSegments);
+  }
+
+  hasFolderPath(path) {
+    return fs.existsSync(path);
+  }
+
+  async createFolder(path) {
+    await fs.promises.mkdir(path);
+  }
+
+  async cloneRepositories(path) {
+    const repositoriesUrl =
+      await this.repositoriesRepository.findRepositoriesUrl();
+
+    for (const url of repositoriesUrl) {
+      const command = `git clone ${url}`;
+      const result = await this.execCommand(command, { cwd: path });
+
+      if (result.stderr) {
+        //
+      } else {
+        //
+      }
+    }
+  }
+
+  async createAdditionalFiles(path) {
+    const clonedFolders = await fs.promises.readdir(path);
+    const additionalFiles =
+      await this.repositoriesRepository.findAdditionalFiles();
+
+    for (const folder of clonedFolders) {
+      for (const file of additionalFiles) {
+        const fileDir = this.getCompletePath(path, folder, file.name);
+        await fs.promises.writeFile(fileDir, file.content);
+      }
+    }
+  }
+
+  async main() {
+    const question = "Deseja clonar os repositórios? (y/N): ";
+    const answer = await this.readLineService.question(question);
+
+    if (this.readLineService.isPositiveAnswer(answer)) {
+      const folderName = this.repositoriesRepository.findFolderName();
+      const folderPath = this.getCompletePath(folderName);
+
+      if (!this.hasFolderPath(folderPath)) {
+        await this.createFolder(folderPath);
+      }
+
+      await this.cloneRepositories(folderPath);
+      await this.createAdditionalFiles(folderPath);
+
+      this.readLineService.closeReadLine();
+    } else {
+      this.readLineService.closeReadLine();
+    }
+  }
+}

@@ -18,4 +18,16 @@ export class RepositoriesRepository {
   find() {
     return this.json;
   }
+
+  findFolderName() {
+    return this.json.folder_name;
+  }
+
+  findRepositoriesUrl() {
+    return this.json.repositories_url;
+  }
+
+  findAdditionalFiles() {
+    return this.json.additional_files;
+  }
 }
