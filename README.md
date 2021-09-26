@@ -1,9 +1,10 @@
-## Node.js script for repositories clone
+## Node.js automation script for repositories clone
 
 ### Example
-Set your repositories url and post clone additional files
+Set your repositories url and extra files to add after clone
 ```json
 {
+  "folder_name": "meus_projetos",
   "repositories_url": [
     "git@github.com:mrbrunelli/my-portfolio.git",
     "git@github.com:mrbrunelli/aws-node-sqs-worker.git",
@@ -21,7 +22,7 @@ Set your repositories url and post clone additional files
 ### How execute
 ```sh
 # Needs Node.js v14+
-yarn start || npm install
+yarn start || npm start
 ``` 
 
 ### Screenshot
